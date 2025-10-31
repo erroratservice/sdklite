@@ -3,7 +3,7 @@ name: sdklite
 on: workflow_dispatch
 
 env:
-  IMAGE: ghcr.io/billibolemeow/anassdk
+  IMAGE: ghcr.io/erroratservice/sdklite
 
 jobs:
   push:
