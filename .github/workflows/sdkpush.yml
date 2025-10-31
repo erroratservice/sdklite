@@ -1,4 +1,4 @@
-name: sdkanas
+name: sdklite
 
 on: workflow_dispatch
 
