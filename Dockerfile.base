@@ -1,1 +1,20 @@
-From python
+FROM python:slim
+
+# Step 0: Certificates + toolchain
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates wget curl \
+ && update-ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Step 2: App/system deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    aria2 megatools p7zip-full ffmpeg libmagic-dev procps git\
+    qbittorrent-nox \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/src/app
+
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+COPY . .
+CMD ["/bin/bash", "start.sh"]
