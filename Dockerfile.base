@@ -1,13 +1,22 @@
 FROM python:3.12-slim
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates wget curl \
  && update-ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Install runtime AND build dependencies, then remove build tools in same layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
     aria2 megatools p7zip-full ffmpeg libmagic-dev procps git \
     qbittorrent-nox \
     gcc g++ make python3-dev \
  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /usr/src/app
+
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
-RUN apt-get purge -y --auto-remove gcc g++ make python3-dev
+
+# Now remove build dependencies to reduce image size
+RUN apt-get update && apt-get purge -y --auto-remove \
+    gcc g++ make python3-dev \
+ && rm -rf /var/lib/apt/lists/*
