@@ -1,10 +1,11 @@
 FROM python:3.12-slim
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates wget curl \
  && update-ca-certificates && rm -rf /var/lib/apt/lists/*
 
-# Install runtime AND build dependencies, then remove build tools in same layer
+# Install runtime dependencies with build tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     aria2 megatools p7zip-full ffmpeg libmagic-dev procps git \
     qbittorrent-nox \
@@ -13,10 +14,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /usr/src/app
 
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+# Create virtual environment and set PATH
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Now remove build dependencies to reduce image size
+# Install Python requirements in venv
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Remove build dependencies to reduce image size
 RUN apt-get update && apt-get purge -y --auto-remove \
     gcc g++ make python3-dev \
  && rm -rf /var/lib/apt/lists/*
