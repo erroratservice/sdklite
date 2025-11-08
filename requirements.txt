@@ -20,7 +20,7 @@ natsort
 par2cmdline-turbo
 pillow
 psutil
-pymongo
+pymongo>=4.13.0
 pyrofork==2.2.11
 python-magic
 requests
