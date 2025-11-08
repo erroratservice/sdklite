@@ -1,29 +1,62 @@
-FROM python:3.12-slim
+FROM mysterysd/wzmlx:v3
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates wget curl \
- && update-ca-certificates && rm -rf /var/lib/apt/lists/*
+# Remove Java packages
+RUN echo "=== REMOVING JAVA PACKAGES ===" && \
+    apt-get update && \
+    apt-get remove -y --purge \
+        openjdk-21-jre-headless openjdk-21-jre \
+        ca-certificates-java default-jre-headless default-jre \
+        java-common libjna-java libjna-jni && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install runtime dependencies with build tools
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    aria2 megatools p7zip-full ffmpeg libmagic-dev procps git \
-    qbittorrent-nox \
-    gcc g++ make python3-dev \
- && rm -rf /var/lib/apt/lists/*
+# Verify Java removal
+RUN echo "=== VERIFYING JAVA REMOVAL ===" && \
+    if dpkg -l | grep -i 'openjdk\|java-common\|default-jre'; then \
+        echo "ERROR: Java packages still installed!" && exit 1; \
+    else \
+        echo "SUCCESS: Java packages removed"; \
+    fi
 
-WORKDIR /usr/src/app
+# Remove SABnzbd packages
+RUN echo "=== REMOVING SABNZBD PACKAGES ===" && \
+    apt-get update && \
+    apt-get remove -y --purge \
+        sabnzbdplus par2 python3-sabctools \
+        python3-cheetah python3-cherrypy3 python3-cheroot && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Create virtual environment and set PATH
-ENV VIRTUAL_ENV=/opt/venv
-RUN python3 -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+# Verify SABnzbd removal
+RUN echo "=== VERIFYING SABNZBD REMOVAL ===" && \
+    if dpkg -l | grep -i 'sabnzbd\|par2'; then \
+        echo "ERROR: SABnzbd packages still installed!" && exit 1; \
+    else \
+        echo "SUCCESS: SABnzbd packages removed"; \
+    fi
 
-# Install Python requirements in venv
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Remove JDownloader directory
+RUN echo "=== REMOVING JDOWNLOADER ===" && \
+    rm -rf /JDownloader 2>/dev/null || true
 
-# Remove build dependencies to reduce image size
-RUN apt-get update && apt-get purge -y --auto-remove \
-    gcc g++ make python3-dev \
- && rm -rf /var/lib/apt/lists/*
+# Verify JDownloader removal
+RUN echo "=== VERIFYING JDOWNLOADER REMOVAL ===" && \
+    if [ -d "/JDownloader" ]; then \
+        echo "ERROR: JDownloader directory still exists!" && exit 1; \
+    else \
+        echo "SUCCESS: JDownloader removed"; \
+    fi
+
+# Final cleanup
+RUN rm -rf /tmp/* /var/tmp/* /root/.cache/* && \
+    find / -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
+
+# Display final summary
+RUN echo "=== REMOVAL SUMMARY ===" && \
+    echo "Packages removed:" && \
+    echo "- Java: openjdk-21, default-jre, etc." && \
+    echo "- SABnzbd: sabnzbdplus, par2, etc." && \
+    echo "- JDownloader: /JDownloader directory" && \
+    echo "=== VERIFICATION COMPLETE ==="
