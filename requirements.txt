@@ -16,11 +16,12 @@ gunicorn
 httpx
 jinja2
 lxml
+motor
 natsort
 par2cmdline-turbo
 pillow
 psutil
-pymongo>=4.13.0
+pymongo
 pyrofork==2.2.11
 python-magic
 requests
